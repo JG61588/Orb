@@ -1,0 +1,6 @@
+{
+  "name": "ORB Quant Simulator - Opening Range Breakout Trading Bot",
+  "description": "Interactive trading bot simulator for a $100 starting account testing the Opening Range Breakout (ORB) strategy with real-time Stop-Loss and Take-Profit parameter optimization, equity curve modeling, and trade analytics.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
