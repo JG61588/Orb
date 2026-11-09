@@ -48,28 +48,43 @@ export const StrategyControls: React.FC<StrategyControlsProps> = ({
 
   const presets = [
     {
-      label: 'Strict Confluence (Win Rate Max)',
+      label: 'Calibrated Growth (1.2x Vol + 200 SMA + ATR)',
       sl: 2.0,
       tp: 4.0,
       orb: 15,
       sma: true,
       vol: true,
+      volMult: 1.2,
+      trail: true,
+      atr: true,
+      vwap: true,
+      htf: false,
+    },
+    {
+      label: 'Strict Confluence (1.5x Vol + 1H Guard)',
+      sl: 2.0,
+      tp: 4.0,
+      orb: 15,
+      sma: true,
+      vol: true,
+      volMult: 1.5,
       trail: true,
       atr: true,
       vwap: true,
       htf: true,
     },
     {
-      label: 'High Probability Runner (1.5% SL / 4.0% TP)',
-      sl: 1.5,
-      tp: 4.0,
+      label: 'Tight Trailing (1.0% SL / 3.0% TP)',
+      sl: 1.0,
+      tp: 3.0,
       orb: 15,
       sma: true,
       vol: true,
+      volMult: 1.2,
       trail: true,
       atr: true,
       vwap: true,
-      htf: true,
+      htf: false,
     },
     {
       label: 'Quick Scalp (0.75% / 1.5%)',
@@ -78,21 +93,10 @@ export const StrategyControls: React.FC<StrategyControlsProps> = ({
       orb: 5,
       sma: true,
       vol: true,
+      volMult: 1.2,
       trail: false,
       atr: true,
       vwap: true,
-      htf: false,
-    },
-    {
-      label: 'Baseline Classic ORB',
-      sl: 2.0,
-      tp: 4.0,
-      orb: 15,
-      sma: false,
-      vol: false,
-      trail: false,
-      atr: false,
-      vwap: false,
       htf: false,
     },
   ];
@@ -121,6 +125,7 @@ export const StrategyControls: React.FC<StrategyControlsProps> = ({
               settings.orbMinutes === p.orb &&
               settings.useSma200Filter === p.sma &&
               settings.useVolumeConfirmation === p.vol &&
+              Math.abs((settings.volumeMultiplier || 1.2) - p.volMult) < 0.05 &&
               settings.useTrailingStop === p.trail &&
               settings.useAtrFilter === p.atr &&
               settings.useVwapFilter === p.vwap &&
@@ -136,6 +141,7 @@ export const StrategyControls: React.FC<StrategyControlsProps> = ({
                     orbMinutes: p.orb,
                     useSma200Filter: p.sma,
                     useVolumeConfirmation: p.vol,
+                    volumeMultiplier: p.volMult,
                     useTrailingStop: p.trail,
                     useAtrFilter: p.atr,
                     useVwapFilter: p.vwap,
@@ -156,7 +162,7 @@ export const StrategyControls: React.FC<StrategyControlsProps> = ({
           {onResetToDefaults && (
             <button
               onClick={onResetToDefaults}
-              title="Reset to permanent defaults: 2.0% SL, 4.0% TP, 200 SMA on, Volume 1.5x on, Trailing Stop on, ATR 15m on, VWAP on, 1H EMA on"
+              title="Reset to permanent defaults: 2.0% SL, 4.0% TP, 200 SMA on, Volume 1.2x on, Trailing Stop on, ATR 15m on, VWAP on"
               className="px-2 py-1 text-xs font-medium text-slate-400 hover:text-slate-200 bg-slate-900 hover:bg-slate-800 border border-slate-800 rounded-md transition-colors ml-1 cursor-pointer"
             >
               Reset Defaults
@@ -380,12 +386,28 @@ export const StrategyControls: React.FC<StrategyControlsProps> = ({
                         : 'bg-slate-800 text-slate-400'
                     }`}
                   >
-                    {settings.useVolumeConfirmation ? '1.5x SURGE' : 'OFF'}
+                    {settings.useVolumeConfirmation ? `${settings.volumeMultiplier || 1.2}x SURGE` : 'OFF'}
                   </span>
                 </div>
                 <p className="text-[11px] text-slate-400 mt-1 leading-snug">
-                  Requires breakout candle volume &ge; 1.5x of previous 5-candle average to weed out fakeouts.
+                  Requires breakout candle volume &ge; {settings.volumeMultiplier || 1.2}x of previous 5-candle rolling average.
                 </p>
+                <div className="flex items-center gap-1.5 mt-2">
+                  <span className="text-[10px] text-slate-400">Multiplier:</span>
+                  {[1.2, 1.5].map((mult) => (
+                    <button
+                      key={mult}
+                      onClick={() => updateField('volumeMultiplier', mult)}
+                      className={`px-1.5 py-0.5 text-[10px] font-mono rounded transition-colors ${
+                        (settings.volumeMultiplier || 1.2) === mult
+                          ? 'bg-blue-500 text-white font-bold'
+                          : 'bg-slate-800 text-slate-400 hover:text-slate-200'
+                      }`}
+                    >
+                      {mult}x
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
 
@@ -397,7 +419,9 @@ export const StrategyControls: React.FC<StrategyControlsProps> = ({
                   : 'bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700'
               }`}
             >
-              {settings.useVolumeConfirmation ? '✓ 1.5x Volume Active' : 'Enable Volume Surge'}
+              {settings.useVolumeConfirmation
+                ? `✓ ${settings.volumeMultiplier || 1.2}x Volume Active`
+                : 'Enable Volume Surge'}
             </button>
           </div>
 

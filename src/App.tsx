@@ -13,7 +13,7 @@ import { TradeJournal } from './components/TradeJournal';
 import { StrategyGuide } from './components/StrategyGuide';
 import { Check, Loader2, Sparkles } from 'lucide-react';
 
-const SETTINGS_STORAGE_KEY = 'orb_bot_strategy_settings_v3';
+const SETTINGS_STORAGE_KEY = 'orb_bot_strategy_settings_v4';
 
 export default function App() {
   const [currentAsset, setCurrentAsset] = useState<AssetProfile>(AVAILABLE_ASSETS[0]); // SPY default
@@ -119,7 +119,7 @@ export default function App() {
     } catch {
       // ignore
     }
-    showToast('Reset to permanent defaults: 2.0% SL, 4.0% TP, 200 SMA, 15m ATR, VWAP & 1H 50 EMA');
+    showToast('Reset to calibrated defaults: 2.0% SL, 4.0% TP, 200 SMA on, 1.2x Volume & VWAP');
   };
 
   // Handler to apply the best backtested configuration

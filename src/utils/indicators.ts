@@ -4,13 +4,13 @@ import { DaySession } from '../types/trading';
  * Calculates all technical indicators across all trading sessions:
  * 1. 200-period Simple Moving Average (SMA) on 5m chart
  * 2. Daily Intraday Volume-Weighted Average Price (VWAP)
- * 3. 14-period Average True Range (ATR) on 15-minute timeframe
- * 4. 50-period Exponential Moving Average (EMA) on 1-hour timeframe + 1H trend bias
+ * 3. 14-period Average True Range (ATR) on 15-minute timeframe (without lookahead)
+ * 4. 50-period Exponential Moving Average (EMA) on 1-hour timeframe (without lookahead)
  */
 export function enrichSessionsWithIndicators(sessions: DaySession[]): DaySession[] {
   if (sessions.length === 0) return sessions;
 
-  // Flatten all 5m candles in chronological order for multi-timeframe aggregation
+  // Flatten all 5m candles in chronological order with session metadata
   const allCandlesWithSession: { candle: any; sessionIndex: number; candleIndex: number }[] = [];
   for (let s = 0; s < sessions.length; s++) {
     for (let c = 0; c < sessions[s].candles.length; c++) {
@@ -71,11 +71,10 @@ export function enrichSessionsWithIndicators(sessions: DaySession[]): DaySession
 
   for (const item of allCandlesWithSession) {
     const c = item.candle;
-    const dateObj = new Date(c.timestamp * 1000);
-    // 15m bucket key: YYYY-MM-DD HH:(00|15|30|45)
-    const minutes = dateObj.getMinutes();
-    const bucketMin = Math.floor(minutes / 15) * 15;
-    const key = `${dateObj.toDateString()}-${dateObj.getHours()}-${bucketMin}`;
+    const sessionDate = sessions[item.sessionIndex].date;
+    const [hh, mm] = c.time.split(':').map(Number);
+    const bucketMin = Math.floor(mm / 15) * 15;
+    const key = `${sessionDate}-${hh}-${bucketMin}`;
 
     if (!current15m || current15mKey !== key) {
       if (current15m) {
@@ -107,6 +106,7 @@ export function enrichSessionsWithIndicators(sessions: DaySession[]): DaySession
   const atrPeriod = 14;
   let runningAtr = 0;
   const trs: number[] = [];
+  const atrs15m: number[] = [];
 
   for (let b = 0; b < bars15m.length; b++) {
     const bar = bars15m[b];
@@ -126,9 +126,16 @@ export function enrichSessionsWithIndicators(sessions: DaySession[]): DaySession
     }
 
     const roundedAtr = Number(Math.max(0.1, runningAtr).toFixed(2));
-    // Assign ATR to each 5m candle in this 15m period
+    atrs15m.push(roundedAtr);
+  }
+
+  // Assign prior completed 15m ATR to each candle to prevent lookahead bias
+  for (let b = 0; b < bars15m.length; b++) {
+    const bar = bars15m[b];
+    // Prior completed ATR is known at the start of bar b; if b === 0, use bar 0 ATR
+    const knownAtr = b > 0 ? atrs15m[b - 1] : atrs15m[0];
     for (const ptr of bar.candlePointers) {
-      ptr.atr15m = roundedAtr;
+      ptr.atr15m = knownAtr;
     }
   }
 
@@ -149,8 +156,9 @@ export function enrichSessionsWithIndicators(sessions: DaySession[]): DaySession
 
   for (const item of allCandlesWithSession) {
     const c = item.candle;
-    const dateObj = new Date(c.timestamp * 1000);
-    const key = `${dateObj.toDateString()}-${dateObj.getHours()}`;
+    const sessionDate = sessions[item.sessionIndex].date;
+    const [hh] = c.time.split(':').map(Number);
+    const key = `${sessionDate}-${hh}`;
 
     if (!current1h || current1hKey !== key) {
       if (current1h) {
@@ -182,6 +190,7 @@ export function enrichSessionsWithIndicators(sessions: DaySession[]): DaySession
   const emaPeriod = 50;
   const emaMultiplier = 2 / (emaPeriod + 1); // 2 / 51 ≈ 0.0392
   let runningEma = bars1h[0]?.close || basePrice;
+  const emas1h: number[] = [];
 
   for (let h = 0; h < bars1h.length; h++) {
     const bar = bars1h[h];
@@ -190,11 +199,16 @@ export function enrichSessionsWithIndicators(sessions: DaySession[]): DaySession
     } else {
       runningEma = bar.close * emaMultiplier + runningEma * (1 - emaMultiplier);
     }
+    emas1h.push(Number(runningEma.toFixed(2)));
+  }
 
-    const roundedEma = Number(runningEma.toFixed(2));
+  // Assign prior completed 1-hour EMA to prevent lookahead
+  for (let h = 0; h < bars1h.length; h++) {
+    const bar = bars1h[h];
+    const knownEma = h > 0 ? emas1h[h - 1] : emas1h[0];
     for (const ptr of bar.candlePointers) {
-      ptr.ema50_1h = roundedEma;
-      ptr.is1hBullish = ptr.close >= roundedEma;
+      ptr.ema50_1h = knownEma;
+      ptr.is1hBullish = ptr.close >= knownEma;
     }
   }
 

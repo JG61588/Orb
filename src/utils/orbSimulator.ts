@@ -199,10 +199,15 @@ export function runOrbSimulation(
       // Track subsequent candles to find exit using Trailing Stop Engine
       for (let j = i; j < candles.length; j++) {
         const c = candles[j];
-        if (c.high > highestDuring) highestDuring = c.high;
-        if (c.low < lowestDuring) lowestDuring = c.low;
+        const isEntryCandle = j === i;
 
         if (triggeredDirection === 'LONG') {
+          const effectiveHigh = c.high;
+          const effectiveLow = isEntryCandle ? Math.min(entryPrice, c.close) : c.low;
+
+          if (effectiveHigh > highestDuring) highestDuring = effectiveHigh;
+          if (effectiveLow < lowestDuring) lowestDuring = effectiveLow;
+
           // Trailing Stop Engine for LONG: ratchets up with new highs
           if (settings.useTrailingStop) {
             const candidateStop = Number((highestDuring * (1 - slPct)).toFixed(2));
@@ -211,7 +216,7 @@ export function runOrbSimulation(
             }
           }
 
-          const hitStop = c.low <= currentTrailingStop;
+          const hitStop = isEntryCandle ? c.close <= currentTrailingStop : c.low <= currentTrailingStop;
           const hitTarget = c.high >= takeProfitPrice;
 
           if (hitStop && hitTarget) {
@@ -232,6 +237,12 @@ export function runOrbSimulation(
           }
         } else {
           // Trailing Stop Engine for SHORT: ratchets down with new lows
+          const effectiveLow = c.low;
+          const effectiveHigh = isEntryCandle ? Math.max(entryPrice, c.close) : c.high;
+
+          if (effectiveHigh > highestDuring) highestDuring = effectiveHigh;
+          if (effectiveLow < lowestDuring) lowestDuring = effectiveLow;
+
           if (settings.useTrailingStop) {
             const candidateStop = Number((lowestDuring * (1 + slPct)).toFixed(2));
             if (candidateStop < currentTrailingStop) {
@@ -239,7 +250,7 @@ export function runOrbSimulation(
             }
           }
 
-          const hitStop = c.high >= currentTrailingStop;
+          const hitStop = isEntryCandle ? c.close >= currentTrailingStop : c.high >= currentTrailingStop;
           const hitTarget = c.low <= takeProfitPrice;
 
           if (hitStop && hitTarget) {

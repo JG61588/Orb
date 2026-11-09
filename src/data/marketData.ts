@@ -196,7 +196,8 @@ export async function fetchLiveMarketData(symbol: string): Promise<MarketFeedRes
 
   // 1. Try our Express backend endpoint `/api/market-data`
   try {
-    const res = await fetch(`/api/market-data?symbol=${encodeURIComponent(symbol)}&range=1mo&interval=5m`);
+    const apiBase = typeof window !== 'undefined' ? '' : 'http://localhost:3000';
+    const res = await fetch(`${apiBase}/api/market-data?symbol=${encodeURIComponent(symbol)}&range=1mo&interval=5m`);
     if (res.ok) {
       const data = await res.json();
       if (data.success && data.sessions && data.sessions.length > 0) {

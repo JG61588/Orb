@@ -82,13 +82,13 @@ export interface StrategySettings {
   slippagePercent: number; // e.g. 0.02% or 0
   maxTradesPerDay: number; // 1 or 2
   useSma200Filter: boolean; // default true: Long only if price > 200 SMA
-  useVolumeConfirmation: boolean; // default true: 1.5x volume surge vs prior 5 candles
-  volumeMultiplier: number; // default 1.5
+  useVolumeConfirmation: boolean; // default true: 1.2x volume surge vs prior 5 candles
+  volumeMultiplier: number; // default 1.2
   useTrailingStop: boolean; // default true: ratchets stop-loss as price moves favorably
   useAtrFilter: boolean; // default true: 14 ATR on 15m, body size > 1.2x ATR
   atrMultiplier: number; // default 1.2
   useVwapFilter: boolean; // default true: Long > VWAP, Short < VWAP
-  useHtfEmaFilter: boolean; // default true: 50 EMA on 1-hour chart trend filter
+  useHtfEmaFilter: boolean; // default false: optional 50 EMA on 1-hour chart trend filter
 }
 
 export const DEFAULT_STRATEGY_SETTINGS: StrategySettings = {
@@ -103,12 +103,12 @@ export const DEFAULT_STRATEGY_SETTINGS: StrategySettings = {
   maxTradesPerDay: 1,
   useSma200Filter: true,
   useVolumeConfirmation: true,
-  volumeMultiplier: 1.5,
+  volumeMultiplier: 1.2,
   useTrailingStop: true,
   useAtrFilter: true,
   atrMultiplier: 1.2,
   useVwapFilter: true,
-  useHtfEmaFilter: true,
+  useHtfEmaFilter: false,
 };
 
 export interface EquityPoint {

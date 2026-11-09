@@ -64,15 +64,15 @@ export const StrategyGuide: React.FC = () => {
         <div className="p-4 rounded-lg bg-slate-900/60 border border-slate-800 space-y-2">
           <div className="flex items-center gap-2 text-rose-400 font-semibold">
             <ShieldCheck className="w-4 h-4" />
-            <span>4. 1-Hour 50 EMA Guard</span>
+            <span>4. 1-Hour 50 EMA Guard (Optional)</span>
           </div>
           <p className="text-slate-300 leading-relaxed">
-            Multi-timeframe guard strictly forbids Longs if the 1-hour trend is bearish, or Shorts if 1-hour trend is bullish.
+            Multi-timeframe macro filter that can be enabled to restrict entries strictly to 1-hour trend direction.
           </p>
           <div className="font-mono text-[11px] text-slate-400 pt-1">
-            • 1-Hour 50 EMA Trend Guard
+            • Optional higher-timeframe guard
             <br />
-            • Prevents counter-macro traps
+            • Disabled by default for active trade flow
           </div>
         </div>
 
@@ -83,12 +83,12 @@ export const StrategyGuide: React.FC = () => {
             <span>5. Volume Surge Confirmation</span>
           </div>
           <p className="text-slate-300 leading-relaxed">
-            Breakout 5-minute candle volume must be &ge; 1.5x of the rolling average of the prior 5 candles.
+            Breakout 5-minute candle volume must be &ge; 1.2x of the rolling average of the prior 5 candles.
           </p>
           <div className="font-mono text-[11px] text-slate-400 pt-1">
-            • 1.5x volume expansion
+            • 1.2x volume expansion (calibrated)
             <br />
-            • Weeds out low-liquidity chop
+            • Filters low-liquidity fakeouts
           </div>
         </div>
 

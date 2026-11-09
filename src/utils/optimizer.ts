@@ -59,7 +59,10 @@ export function runParameterOptimizationGrid(
 
       if (
         !highestWinRateCell ||
-        (cell.totalTrades >= 10 && cell.winRate > highestWinRateCell.winRate)
+        (cell.totalTrades >= 2 && cell.winRate > highestWinRateCell.winRate) ||
+        (cell.totalTrades >= 2 &&
+          cell.winRate === highestWinRateCell.winRate &&
+          cell.endingBalance > highestWinRateCell.endingBalance)
       ) {
         highestWinRateCell = cell;
       }
